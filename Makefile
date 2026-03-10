@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Iinclude -Isrc -Wall
-LDFLAGS = -lglfw -lGL -ldl -pthread -lcurl
+LDFLAGS = -lglfw -lGL -ldl -pthread -lcurl -pthread -ldl
 
 SRC_DIR = src
 BUILD_DIR = build

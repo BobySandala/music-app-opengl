@@ -1,35 +1,26 @@
-#include "core/window.h"
-#include "network/youtube_api.h"
-
+#include "audio/audio_engine.h"
 #include <iostream>
 
 int main()
 {
-    Window window(800, 600, "OpenGL Music Player");
+    AudioEngine audio;
 
-    if (!window.init())
-        return -1;
+    std::string url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
-    YoutubeAPI youtube;
-
-    youtube.search("daft punk");
-
-    bool printed = false;
-
-    while (!window.shouldClose())
+    if (!audio.play(url))
     {
-        window.update();
-
-        if (youtube.hasResults() && !printed)
-        {
-            printed = true;
-
-            for (auto& r : youtube.getResults())
-            {
-                std::cout << r.title << " - " << r.uploader << std::endl;
-            }
-        }
+        std::cout << "Playback failed\n";
+        return -1;
     }
 
-    window.shutdown();
+    std::cout << "Set volume (0.0 - 1.0): ";
+    float v;
+    std::cin >> v;
+    audio.setVolume(v);
+    std::cin.ignore(); // clear newline
+
+    std::cout << "Press ENTER to stop\n";
+    std::cin.get();
+
+    audio.stop();
 }

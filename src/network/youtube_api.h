@@ -17,6 +17,8 @@ struct SongResult
 class YoutubeAPI
 {
 private:
+    int maxResults {1};
+
     std::vector<SongResult> results;
 
     std::atomic<bool> searching = false;
@@ -25,8 +27,10 @@ private:
     std::mutex resultMutex;
 
     std::thread worker;
+    std::atomic<bool> cancelFlag{false};
 
     std::vector<SongResult> performSearch(const std::string& query);
+
 
 public:
     void search(const std::string& query);
@@ -35,4 +39,9 @@ public:
     bool hasResults();
 
     std::vector<SongResult> getResults();
+
+    void setMaxResults(int max);
+    int getMaxResults() const;
+
+    ~YoutubeAPI();
 };
