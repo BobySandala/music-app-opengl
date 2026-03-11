@@ -1,63 +1,64 @@
-#include "window.h"
-#include <glad/glad.h>
+#include "core/window.h"
+
 #include <iostream>
 
 Window::Window(int w, int h, const char* t)
+    : width{w}, height{h}, title{t}
 {
-    width = w;
-    height = h;
-    title = t;
 }
 
 bool Window::init()
 {
     if (!glfwInit())
     {
-        std::cout << "GLFW init failed\n";
+        std::cerr << "Failed to initialize GLFW\n";
         return false;
     }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    window = glfwCreateWindow(width, height, title, NULL, NULL);
+    window = glfwCreateWindow(width, height, title, nullptr, nullptr);
 
     if (!window)
     {
-        std::cout << "Window creation failed\n";
+        std::cerr << "Failed to create GLFW window\n";
         glfwTerminate();
         return false;
     }
 
     glfwMakeContextCurrent(window);
 
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "GLAD failed\n";
-        return false;
-    }
-
-    std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
+    // Enable VSync
+    glfwSwapInterval(1);
 
     return true;
 }
 
 void Window::update()
 {
-    glClearColor(0.1f, 0.1f, 0.12f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
     glfwSwapBuffers(window);
     glfwPollEvents();
 }
 
-bool Window::shouldClose()
+bool Window::shouldClose() const
 {
     return glfwWindowShouldClose(window);
 }
 
 void Window::shutdown()
 {
-    glfwDestroyWindow(window);
+    if (window)
+    {
+        glfwDestroyWindow(window);
+        window = nullptr;
+    }
+
     glfwTerminate();
+}
+
+GLFWwindow* Window::getNativeWindow() const
+{
+    return window;
 }

@@ -6,6 +6,8 @@
 #include <filesystem>
 #include <iostream>
 #include <cstdlib>
+#include <cstring>
+#include <chrono>
 
 const std::string folder_name = "opengl_music_player";
 static std::string extractVideoId(const std::string& url);
@@ -17,7 +19,7 @@ AudioEngine::~AudioEngine()
     stop();
 }
 
-bool AudioEngine::play(const std::string& youtubeUrl)
+bool AudioEngine::setURL(const std::string& youtubeUrl)
 {
     stop();
     ma_device_set_master_volume(&device, volume);
@@ -67,12 +69,34 @@ bool AudioEngine::play(const std::string& youtubeUrl)
     }
 
     std::cout << "Download finished: " << tempFile << std::endl;
+    return true;
+}
 
+bool AudioEngine::play()
+{
+    if (!std::filesystem::exists(tempFile))
+    {
+        std::cerr << "[Audio Engine] play - Audio file not found\n";
+        return false;
+    } 
+    else
+    {
+        std::lock_guard<std::mutex> lock(threadMutex);
+        state = AudioEngineState::Playing;
+        playbackThread = std::thread(&AudioEngine::playbackWorker, this);
+        playbackThread.detach();
+    }
+    return true;
+}
+
+void AudioEngine::playbackWorker()
+{    
     // Init decoder
     if (ma_decoder_init_file(tempFile.c_str(), NULL, &decoder) != MA_SUCCESS)
     {
         std::cerr << "Decoder init failed\n";
-        return false;
+        state = AudioEngineState::Stopped;
+        return;
     }
 
     // Setup device
@@ -81,13 +105,13 @@ bool AudioEngine::play(const std::string& youtubeUrl)
     config.playback.channels = decoder.outputChannels;
     config.sampleRate        = decoder.outputSampleRate;
     config.dataCallback      = dataCallback;
-    config.pUserData         = &decoder;
+    config.pUserData         = this;
 
     if (ma_device_init(NULL, &config, &device) != MA_SUCCESS)
     {
         std::cerr << "Device init failed\n";
         ma_decoder_uninit(&decoder);
-        return false;
+        return;
     }
 
     if (ma_device_start(&device) != MA_SUCCESS)
@@ -95,25 +119,57 @@ bool AudioEngine::play(const std::string& youtubeUrl)
         std::cerr << "Device start failed\n";
         ma_device_uninit(&device);
         ma_decoder_uninit(&decoder);
-        return false;
+        return;
     }
 
-    playing = true;
+    state = AudioEngineState::Playing;
 
     std::cout << "Playback started\n";
-    return true;
+    return;
+}
+
+void AudioEngine::togglePlayPause()
+{
+    if (state == AudioEngineState::Playing) 
+    {
+        std::cout << "[Audio Engine] - toggle play: pausing\n";
+        pause();
+    }
+    else if (state == AudioEngineState::Paused) 
+    {
+        std::cout << "[Audio Engine] - toggle play: resuming\n";
+        resume();
+    }
+}
+
+// true to pause, false to resume
+void AudioEngine::pause()
+{
+    if (state != AudioEngineState::Playing) return;
+
+    ma_device_stop(&device);
+    state = AudioEngineState::Paused;
+
+    std::cout << "Playback paused\n";
+}
+
+void AudioEngine::resume()
+{
+    if (state != AudioEngineState::Paused) return;
+
+    ma_device_start(&device);
+    state = AudioEngineState::Playing;
+
+    std::cout << "Playback resumed\n";
 }
 
 void AudioEngine::stop()
 {
-    if (!playing)
-        return;
+    pause();
 
-    ma_device_stop(&device);
+    // Uninit device and decoder
     ma_device_uninit(&device);
     ma_decoder_uninit(&decoder);
-
-    playing = false;
 
     // delete temp file
     if (!tempFile.empty() && std::filesystem::exists(tempFile))
@@ -122,10 +178,41 @@ void AudioEngine::stop()
     tempFile.clear();
 }
 
-void AudioEngine::dataCallback(ma_device* device, void* output, const void* input, ma_uint32 frameCount)
+// called when the device needs more samples to play
+void AudioEngine::dataCallback(ma_device* pDevice, void* output, const void* input, ma_uint32 frameCount)
 {
-    ma_decoder* decoder = (ma_decoder*)device->pUserData;
-    ma_decoder_read_pcm_frames(decoder, output, frameCount, NULL);
+    AudioEngine* engine = static_cast<AudioEngine*>(pDevice->pUserData);
+    if (!engine)
+    {
+        std::cerr << "[Audio Engine - dataCallback] Cast Failed";
+        return;
+    }
+
+    if (engine->state == AudioEngineState::Paused)
+    {
+        // Fill silence
+        std::memset(output, 0, frameCount * engine->decoder.outputChannels * ma_get_bytes_per_sample(engine->decoder.outputFormat));
+        return;
+    }
+
+    ma_uint64 framesRead;
+    ma_decoder_read_pcm_frames(&engine->decoder, output, frameCount, &framesRead);
+
+    // Apply volume (assuming float format)
+    if (engine->decoder.outputFormat == ma_format_f32)
+    {
+        float* out = static_cast<float*>(output);
+        for(ma_uint64 i = 0; i < framesRead * engine->decoder.outputChannels; i++)
+        {
+            out[i] *= engine->volume.load();
+        }
+    }
+
+    if (framesRead < frameCount)
+    {
+        size_t offset = framesRead * engine->decoder.outputChannels * ma_get_bytes_per_sample(engine->decoder.outputFormat);
+        std::memset((char*)output + offset, 0, (frameCount - framesRead) * engine->decoder.outputChannels * ma_get_bytes_per_sample(engine->decoder.outputFormat));
+    }
 }
 
 void AudioEngine::setVolume(float v)
@@ -134,9 +221,6 @@ void AudioEngine::setVolume(float v)
     if (v > 1.0f) v = 1.0f;
 
     volume = v;
-
-    if (playing)
-        ma_device_set_master_volume(&device, volume);
 }
 
 float AudioEngine::getVolume() const

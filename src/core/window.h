@@ -1,23 +1,24 @@
 #pragma once
 
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 class Window
 {
-private:
-    int width;
-    int height;
-    const char* title;
-
-    GLFWwindow* window;
-
 public:
-    Window(int w, int h, const char* t);
+    Window(int width, int height, const char* title);
 
     bool init();
     void update();
-    bool shouldClose();
 
+    bool shouldClose() const;
     void shutdown();
+
+    GLFWwindow* getNativeWindow() const;
+
+private:
+    int width{0};
+    int height{0};
+    const char* title{nullptr};
+
+    GLFWwindow* window{nullptr};
 };
