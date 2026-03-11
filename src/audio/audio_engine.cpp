@@ -12,16 +12,82 @@
 const std::string folder_name = "opengl_music_player";
 static std::string extractVideoId(const std::string& url);
 
-AudioEngine::AudioEngine() {}
+AudioEngine::AudioEngine() 
+{
+    worker = std::thread(&AudioEngine::processQueue, this);
+}
 
 AudioEngine::~AudioEngine()
 {
+    if (downloadThread.joinable()) downloadThread.join();
     stop();
+}
+
+void AudioEngine::processQueue()
+{
+    while (running)
+    {
+        std::unique_lock<std::mutex> lock(queueMutex);
+
+        queueCV.wait(lock, [&]{ return !commandQueue.empty(); });
+
+        AudioCommand cmd = commandQueue.front();
+        commandQueue.pop();
+
+        switch (cmd.type)
+        {
+        case AudiocommandType::Download:
+            downloadTask(cmd.url);
+            break;
+        case AudiocommandType::Play:
+            play();
+            break;
+        case AudiocommandType::Resume:
+            resume();
+            break;
+        case AudiocommandType::Stop:
+            stop();
+            break;
+        case AudiocommandType::TogglePlay:
+            togglePlayPause();
+            break;
+        case AudiocommandType::Pause:
+            pause();
+            break;
+        case AudiocommandType::Exit:
+            running = false;
+            break;
+        default:
+            std::cout << "Unknown command" << std::endl;
+            break;
+        }
+    }
+}
+
+void AudioEngine::enqueue(const AudioCommand& cmd)
+{
+    {
+        std::lock_guard<std::mutex> lock(queueMutex);
+        commandQueue.push(cmd);
+    }
+    queueCV.notify_one();
 }
 
 bool AudioEngine::setURL(const std::string& youtubeUrl)
 {
-    stop();
+    if (downloading) return false;
+
+    downloading = true;
+    ready = false;
+    if (downloadThread.joinable()) downloadThread.join();
+
+    downloadThread = std::thread(&AudioEngine::downloadTask, this, youtubeUrl);
+    return true;
+}
+
+void AudioEngine::downloadTask(const std::string& youtubeUrl)
+{
+    //stop();
     ma_device_set_master_volume(&device, volume);
 
     std::string videoId = extractVideoId(youtubeUrl);
@@ -54,7 +120,7 @@ bool AudioEngine::setURL(const std::string& youtubeUrl)
         if (system(cmd.c_str()) != 0)
         {
             std::cerr << "Download failed\n";
-            return false;
+            return;
         }
     }
     else
@@ -65,11 +131,12 @@ bool AudioEngine::setURL(const std::string& youtubeUrl)
     if (!std::filesystem::exists(tempFile))
     {
         std::cerr << "Downloaded file not found\n";
-        return false;
+        return;
     }
 
     std::cout << "Download finished: " << tempFile << std::endl;
-    return true;
+    downloading = false;
+    ready = true;
 }
 
 bool AudioEngine::play()
@@ -226,6 +293,11 @@ void AudioEngine::setVolume(float v)
 float AudioEngine::getVolume() const
 {
     return volume;
+}
+
+bool AudioEngine::isDownloading() const
+{
+    return downloading;
 }
 
 static std::string extractVideoId(const std::string& url)
