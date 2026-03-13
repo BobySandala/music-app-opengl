@@ -1,5 +1,4 @@
 #include "core/window.h"
-
 #include <iostream>
 
 Window::Window(int w, int h, const char* t)
@@ -29,6 +28,11 @@ bool Window::init()
     }
 
     glfwMakeContextCurrent(window);
+
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "Failed to initialize GLAD\n";
+    }
 
     // Enable VSync
     glfwSwapInterval(1);

@@ -6,27 +6,11 @@
 #include <chrono>
 #include "event/event_bus.h"
 #include "event/events.h"
+#include "graphics/renderer.h"
+#include "graphics/ui_system/ui_element.h"
 
-int main()
+void busSubsribe(Window& window, AudioEngine& audioEngine, EventBus& bus)
 {
-    const std::string testURL {"https://www.youtube.com/watch?v=dvgZkm1xWPE"};
-
-    AudioEngine audioEngine;
-    {
-        AudioCommand cmd {AudiocommandType::Download, testURL};
-        audioEngine.enqueue(cmd);
-    }
-
-    EventBus bus;
-    Window window(800, 600, "Music Player");
-
-    if(!window.init())
-        return -1;
-
-    // Input system
-    Input input(bus);
-    input.init(window.getNativeWindow());
-
     // Subscribe to play event
     bus.subscribe<PlayEvent>([&audioEngine](const PlayEvent&)
     { 
@@ -80,12 +64,36 @@ int main()
     bus.subscribe<MouseClickEvent>([](const MouseClickEvent& e){
         std::cout << "Mouse click: button=" << e.button << " x=" << e.x << " y=" << e.y << "\n";
     });
+}
 
+int main()
+{
+    Window window(800, 600, "Music Player");
+
+    if(!window.init())
+        return -1;
+
+    AudioEngine audioEngine;
+    EventBus bus;
+    Renderer renderer;
+    renderer.init();
+
+    UIElement button(0.0f, 0.0f, 0.3f, 0.2f, 1.0f, 0.0f, 0.0f);
+    // Input system
+    Input input(bus);
+    input.init(window.getNativeWindow());
+
+    //busSubsribe(window, audioEngine, bus);
     while(!window.shouldClose())
     {
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        renderer.drawQuad(button.getQuad());
+
         window.update();
 
         // Process queued events
         bus.process();
     }
+    window.shutdown();
 }
