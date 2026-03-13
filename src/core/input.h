@@ -1,10 +1,10 @@
 #pragma once
 
-#include <GLFW/glfw3.h>
 #include <unordered_map>
 #include <functional>
 #include "event/events.h"
 #include "event/event_bus.h"
+#include <GLFW/glfw3.h>
 
 class Input
 {
@@ -16,9 +16,18 @@ public:
     // Optional: check current key state
     bool isKeyPressed(int key) const;
 
+    void getMousePos(double* x, double* y);
+    void getRelMousePos(double* x, double* y, int width, int height);
+
+    void update();
+
 private:
     GLFWwindow* window{nullptr};
     EventBus& bus;
+    
+    // Mouse position
+    double mx{0};
+    double my{0};
 
     // Key state tracking
     bool keys[512]{};

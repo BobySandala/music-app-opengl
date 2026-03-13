@@ -7,6 +7,7 @@ class Window
 {
 public:
     Window(int width, int height, const char* title);
+    Window();
 
     bool init();
     void update();
@@ -15,6 +16,9 @@ public:
     void shutdown();
 
     GLFWwindow* getNativeWindow() const;
+
+    int getWidth() { return width; };
+    int getHeight() { return height; };
 
 private:
     int width{0};

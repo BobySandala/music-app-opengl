@@ -7,7 +7,7 @@
 #include "event/event_bus.h"
 #include "event/events.h"
 #include "graphics/renderer.h"
-#include "graphics/ui_system/ui_element.h"
+#include "graphics/ui_system/button.h"
 
 void busSubsribe(Window& window, AudioEngine& audioEngine, EventBus& bus)
 {
@@ -78,7 +78,8 @@ int main()
     Renderer renderer;
     renderer.init();
 
-    UIElement button(0.0f, 0.0f, 0.3f, 0.2f, 1.0f, 0.0f, 0.0f);
+    float btnX = 0.0f;
+    Button button(btnX, 0.0f, 0.3f, 0.2f, 1.0f, 0.0f, 0.0f);
     // Input system
     Input input(bus);
     input.init(window.getNativeWindow());
@@ -86,14 +87,24 @@ int main()
     //busSubsribe(window, audioEngine, bus);
     while(!window.shouldClose())
     {
+        input.update();
         glClear(GL_COLOR_BUFFER_BIT);
+
+        double mx, my;
+        input.getRelMousePos(&mx, &my, 800, 600);
+        //std::cout << mx << ' ' << my << std::endl;
+
+        //std::cout << button.isHover((float)mx, (float)my) << std::endl;
+
+        if (button.isHover(mx, my)) button.setColor(0.0f, 1.0f, 0.0f);
+        else button.setColor(1.0f, 0.0f, 0.0f);
 
         renderer.drawQuad(button.getQuad());
 
         window.update();
 
         // Process queued events
-        bus.process();
+        bus.process();;
     }
     window.shutdown();
 }

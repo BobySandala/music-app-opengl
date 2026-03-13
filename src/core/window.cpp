@@ -5,7 +5,7 @@ Window::Window(int w, int h, const char* t)
     : width{w}, height{h}, title{t}
 {
 }
-
+Window::Window() : width{100}, height{100}, title{"Untilted"}{}
 bool Window::init()
 {
     if (!glfwInit())

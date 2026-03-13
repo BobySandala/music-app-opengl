@@ -33,6 +33,11 @@ void Input::init(GLFWwindow* win)
     glfwSetMouseButtonCallback(window, mouseButtonCallback);
 }
 
+void Input::update()
+{
+    glfwGetCursorPos(window, &mx, &my);
+}
+
 bool Input::isKeyPressed(int key) const
 {
     if(key < 0 || key >= 512) return false;
@@ -52,6 +57,24 @@ void Input::mouseButtonCallback(GLFWwindow* window, int button, int action, int 
         instance->handleMouseButton(button, action, mods);
 }
 
+void Input::getMousePos(double* x, double* y)
+{
+    *x = mx;
+    *y = my;
+}
+
+void Input::getRelMousePos(double* x, double* y, int width, int height)
+{
+    double tempMx = mx;
+    double tempMy = my;
+
+    tempMx -= width / 2;
+    tempMy -= height / 2;
+
+    *x = (double) (tempMx / (width/2));
+    *y = (double) (-tempMy / (height/2));
+}
+
 // Internal mouse button handler
 void Input::handleMouseButton(int button, int action, int mods)
 {
@@ -61,7 +84,7 @@ void Input::handleMouseButton(int button, int action, int mods)
         {
             // get the mouse position
             double x, y;
-            glfwGetCursorPos(window, &x, &y);
+            getMousePos(&x, &y);
 
             // Emit mouse click event
             MouseClickEvent event{button, x, y};
