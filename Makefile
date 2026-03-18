@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Iinclude -Isrc -Wall
+CXXFLAGS = -std=c++17 -Iinclude -Isrc -Wall -MMD -MP
 LDFLAGS = -lglfw -lGL -ldl -pthread -lcurl -pthread -ldl
 
 SRC_DIR = src
@@ -31,3 +31,6 @@ clean:
 
 run: all
 	./$(TARGET)
+
+# 👇 ADD THIS LINE
+-include $(OBJ_FILES:.o=.d)

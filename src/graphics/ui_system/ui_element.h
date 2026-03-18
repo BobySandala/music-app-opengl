@@ -4,10 +4,13 @@
 class UIElement
 {
 public:
-    UIElement(float x, float y, float w, float h,
+    UIElement(float x1, float y1, float x2, float y2,
               float r, float g, float b)
     {
-        quad = {x, y, w, h, r, g, b};
+        if (x1 > x2) std::swap(x1, x2);
+        if (y1 > y2) std::swap(y1, y2);
+        quad = {x1, y1, x2, y2, r, g, b};
+        std:: cout << x1 << ' ' << y1 << ' ' << x2 << ' ' << y2 << std::endl;
     }
     const Quad& getQuad() const
     {
@@ -16,8 +19,8 @@ public:
 
     void setPosition(float x, float y)
     {
-        quad.x = x;
-        quad.y = y;
+        quad.x1 = x;
+        quad.y1 = y;
     }
     void setColor (float r, float g, float b)
     {
@@ -25,12 +28,18 @@ public:
     }
     bool isHover(float mx, float my) const
     {
-        return mx >= quad.x &&
-            mx <= quad.x + quad.w &&
-            my >= quad.y &&
-            my <= quad.y + quad.h;
+
+        //std:: cout << mx << ' ' << my << '|' << quad.x1 << ' ' << quad.y1 << std::endl;
+        return  mx >= quad.x1 &&
+                mx <= quad.x2 &&
+                my >= quad.y1 &&
+                my <= quad.y2;
     }
 
+    virtual void onHover();
+    virtual void onLeftClick();
+    virtual void onRightClick();
+    virtual void onUnhover();
 
 protected:
     Quad quad;

@@ -6,10 +6,10 @@
 #include <chrono>
 #include "event/event_bus.h"
 #include "event/events.h"
-#include "graphics/renderer.h"
+#include "graphics/ui_system/ui_manager.h"
 #include "graphics/ui_system/button.h"
 
-void busSubsribe(Window& window, AudioEngine& audioEngine, EventBus& bus)
+void busSubsribe(Window& window, AudioEngine& audioEngine, EventBus& bus, UIManager& ui)
 {
     // Subscribe to play event
     bus.subscribe<PlayEvent>([&audioEngine](const PlayEvent&)
@@ -61,8 +61,9 @@ void busSubsribe(Window& window, AudioEngine& audioEngine, EventBus& bus)
     });
 
     // Subscribe to mouse click event
-    bus.subscribe<MouseClickEvent>([](const MouseClickEvent& e){
-        std::cout << "Mouse click: button=" << e.button << " x=" << e.x << " y=" << e.y << "\n";
+    bus.subscribe<MouseClickEvent>([&ui](const MouseClickEvent& e){
+        //std::cout << "Mouse click: button=" << e.button << " x=" << e.x << " y=" << e.y << "\n";
+        ui.mouseClick(e.button);
     });
 }
 
@@ -78,13 +79,20 @@ int main()
     Renderer renderer;
     renderer.init();
 
+    UIManager ui(renderer);
+
     float btnX = 0.0f;
-    Button button(btnX, 0.0f, 0.3f, 0.2f, 1.0f, 0.0f, 0.0f);
+
+    ui.add_element<Button>(-0.8f,  0.8f, -0.6f,  0.6f, 0.8f, 0.3f, 0.9f); // top-left
+    ui.add_element<Button>( 0.6f,  0.8f,  0.8f,  0.6f, 0.2f, 0.7f, 1.0f); // top-right
+    ui.add_element<Button>(-0.8f, -0.6f, -0.6f, -0.8f, 0.9f, 0.2f, 0.4f); // bottom-left
+    ui.add_element<Button>( 0.6f, -0.6f,  0.8f, -0.8f, 0.4f, 1.0f, 0.6f); // bottom-right
+
     // Input system
     Input input(bus);
     input.init(window.getNativeWindow());
 
-    //busSubsribe(window, audioEngine, bus);
+    busSubsribe(window, audioEngine, bus, ui);
     while(!window.shouldClose())
     {
         input.update();
@@ -96,10 +104,12 @@ int main()
 
         //std::cout << button.isHover((float)mx, (float)my) << std::endl;
 
-        if (button.isHover(mx, my)) button.setColor(0.0f, 1.0f, 0.0f);
-        else button.setColor(1.0f, 0.0f, 0.0f);
+        //if (button.UIElement::isHover(mx, my)) button.UIElement::setColor(0.0f, 1.0f, 0.0f);
+        //else button.UIElement::setColor(1.0f, 0.0f, 0.0f);
+        ui.setMousePos(mx, my);
+        ui.update();
 
-        renderer.drawQuad(button.getQuad());
+        //renderer.drawQuad(button.getQuad());
 
         window.update();
 

@@ -53,13 +53,13 @@ void Renderer::drawQuad(const Quad& q)
     // 2 triangles for 1 quad
     float vertices[] =
     {
-        q.x, q.y,
-        q.x + q.w, q.y,
-        q.x + q.w, q.y + q.h,
+        q.x1, q.y1,
+        q.x2, q.y1,
+        q.x2, q.y2,
 
-        q.x, q.y,
-        q.x + q.w, q.y + q.h,
-        q.x, q.y + q.h
+        q.x1, q.y1,
+        q.x2, q.y2,
+        q.x1, q.y2
     };
 
     glUseProgram(shader);
