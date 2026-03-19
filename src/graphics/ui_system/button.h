@@ -6,11 +6,6 @@ public:
     Button(float x1, float y1, float x2, float y2,
               float r, float g, float b) :
               UIElement {x1, y1, x2, y2, r, g, b}{};
-
-    void onLeftClick() override
-    {
-        if(callback) callback();
-    }
     
     void onRightClick() override
     {

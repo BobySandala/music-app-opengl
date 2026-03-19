@@ -41,11 +41,14 @@ public:
     }
 
     virtual void onHover();
-    virtual void onLeftClick();
+    void onLeftClick();
     virtual void onRightClick();
     virtual void onUnhover();
 
-    void setCallback(Callback cb) { callback=cb; }
+    void setCallback(Callback cb)
+    {
+        callback = cb;
+    }
 
 protected:
     Quad quad;

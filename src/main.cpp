@@ -88,20 +88,29 @@ int main()
 
     // Example: 4 buttons with different behaviors
     ui.add_element<Button>(-0.8f, 0.8f, -0.6f, 0.6f, 0.8f, 0.3f, 0.9f);
-    auto& btn1 = static_cast<Button&>(*ui.getLastElement());
-    btn1.setCallback([](){ std::cout << "Button 1 clicked!\n"; });
 
-    ui.add_element<Button>(0.6f, 0.8f, 0.8f, 0.6f, 0.2f, 0.7f, 1.0f);
-    auto& btn2 = static_cast<Button&>(*ui.getLastElement());
-    btn2.setCallback([](){ std::cout << "Button 2 clicked!\n"; });
+    auto* btn1 = dynamic_cast<Button*>(ui.getLastElement());
+    if (btn1)
+    {
+        btn1->setCallback([&audioEngine]()
+        {
+            std::cout << "Play event received\n";
+            AudioCommand cmd{AudiocommandType::Play, ""};
+            audioEngine.enqueue(cmd);
+        });
+    }
 
-    ui.add_element<Button>(-0.8f, -0.6f, -0.6f, -0.8f, 0.9f, 0.2f, 0.4f);
-    auto& btn3 = static_cast<Button&>(*ui.getLastElement());
-    btn3.setCallback([](){ std::cout << "Button 3 clicked!\n"; });
+    // ui.add_element<Button>(0.6f, 0.8f, 0.8f, 0.6f, 0.2f, 0.7f, 1.0f);
+    // auto& btn2 = static_cast<Button&>(*ui.getLastElement());
+    // btn2.setCallback([](){ std::cout << "Button 2 clicked!\n"; });
 
-    ui.add_element<Button>(0.6f, -0.6f, 0.8f, -0.8f, 0.4f, 1.0f, 0.6f);
-    auto& btn4 = static_cast<Button&>(*ui.getLastElement());
-    btn4.setCallback([](){ std::cout << "Button 4 clicked!\n"; });
+    // ui.add_element<Button>(-0.8f, -0.6f, -0.6f, -0.8f, 0.9f, 0.2f, 0.4f);
+    // auto& btn3 = static_cast<Button&>(*ui.getLastElement());
+    // btn3.setCallback([](){ std::cout << "Button 3 clicked!\n"; });
+
+    // ui.add_element<Button>(0.6f, -0.6f, 0.8f, -0.8f, 0.4f, 1.0f, 0.6f);
+    // auto& btn4 = static_cast<Button&>(*ui.getLastElement());
+    // btn4.setCallback([](){ std::cout << "Button 4 clicked!\n"; });
 
     // Input system
     Input input(bus);
