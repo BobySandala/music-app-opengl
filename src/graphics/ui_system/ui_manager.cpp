@@ -1,10 +1,8 @@
 #include "graphics/ui_system/ui_manager.h"
 #include "graphics/renderer.h"
 
-UIManager::UIManager(Renderer& r)
-    : renderer(r)
-{
-}
+UIManager::UIManager() {}
+UIManager::~UIManager() {}
 
 void UIManager::add_element(std::unique_ptr<UIElement> element)
 {
@@ -24,7 +22,8 @@ void UIManager::update(bool mousePressed)
     {
         if (e->isHover(mx, my)) { e->onHover(); hoveredElement = e.get(); }
         else { e->onUnhover(); }
-        renderer.drawQuad(e->getQuad());
+
+        if (renderer) renderer->drawQuad(e->getQuad());
     }
 }
 
@@ -34,4 +33,16 @@ void UIManager::mouseClick(int mouseBtn)
         hoveredElement->onLeftClick();
     if(mouseBtn == 1)
         hoveredElement->onRightClick();
+}
+
+void UIManager::setEventBus(EventBus& e)
+{
+    bus = &e;
+
+    size_t id = bus->subscribe<MouseClickEvent>(
+        [this](const MouseClickEvent& e)
+        {
+            mouseClick(e.button);
+        }
+    );
 }

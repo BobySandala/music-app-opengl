@@ -6,6 +6,7 @@
 #include <typeindex>
 #include <queue>
 #include <mutex>
+#include <iostream>
 
 class EventBus
 {
@@ -17,9 +18,9 @@ public:
     using Handler = std::function<void(const EventType&)>;
 
     template<typename EventType>
-    void subscribe(Handler<EventType> handler)
+    size_t subscribe(Handler<EventType> handler)
     {
-        auto& handlers{subscribers[typeid(EventType)]};
+        auto& handlers = subscribers[typeid(EventType)];
 
         handlers.push_back(
             [handler](const void* event)
@@ -27,6 +28,24 @@ public:
                 handler(*static_cast<const EventType*>(event));
             }
         );
+
+        return handlers.size() - 1; // return ID
+    }
+
+    // Unsubscribe: works for ANY event type
+    template<typename EventType>
+    void unsubscribe(size_t index)
+    {
+        auto it = subscribers.find(typeid(EventType));
+        if (it == subscribers.end()) return;
+
+        auto& handlers = it->second;
+
+        if (index < handlers.size())
+        {
+            handlers[index] = nullptr; // invalidate safely
+        }
+        std::cout << "[Event bus] Unsubscribe" << std::endl;
     }
 
     template<typename EventType>

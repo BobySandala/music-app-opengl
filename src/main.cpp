@@ -76,10 +76,13 @@ int main()
 
     AudioEngine audioEngine;
     EventBus bus;
+    
     Renderer renderer;
     renderer.init();
 
-    UIManager ui(renderer);
+    UIManager ui;
+    ui.setRenderer(renderer);
+    ui.setEventBus(bus);
 
     float btnX = 0.0f;
 
@@ -92,7 +95,7 @@ int main()
     Input input(bus);
     input.init(window.getNativeWindow());
 
-    busSubsribe(window, audioEngine, bus, ui);
+    //busSubsribe(window, audioEngine, bus, ui);
     while(!window.shouldClose())
     {
         input.update();

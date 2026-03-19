@@ -2,14 +2,23 @@
 #include <vector>
 #include <memory>
 #include "graphics/ui_system/ui_element.h"   // base class for UI elements
+#include "event/event_bus.h"
+#include "event/events.h"
 
 class Renderer; // forward declaration
+
+struct EventSubscription
+{
+    std::type_index type;
+    size_t index;
+};
 
 class UIManager
 {
 public:
     // Constructor takes a Renderer reference
-    UIManager(Renderer& r);
+    UIManager();
+    ~UIManager();
 
     // Add a UI element (preserves derived types, no slicing)
     void add_element(std::unique_ptr<UIElement> element);
@@ -28,9 +37,13 @@ public:
     void setMousePos(float x, float y);
 
     void mouseClick(int mouseBtn);
+
+    void setRenderer(Renderer& r) { renderer = &r; }
+    void setEventBus(EventBus& e);
 private:
-    float mx{0}, my{0};                      // mouse position
-    Renderer& renderer;                       // reference to renderer
+    float mx{0}, my{0};           // mouse position
+    Renderer* renderer {nullptr}; // pointer to renderer
+    EventBus* bus {nullptr};      // event bus
     std::vector<std::unique_ptr<UIElement>> elements; // UI elements
     UIElement* hoveredElement;
 };
