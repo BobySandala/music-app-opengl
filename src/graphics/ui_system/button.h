@@ -9,7 +9,7 @@ public:
 
     void onLeftClick() override
     {
-        std::cout << "Left Button Clicked" << std::endl;
+        if(callback) callback();
     }
     
     void onRightClick() override

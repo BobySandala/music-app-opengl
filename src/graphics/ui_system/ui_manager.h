@@ -40,6 +40,12 @@ public:
 
     void setRenderer(Renderer& r) { renderer = &r; }
     void setEventBus(EventBus& e);
+
+    UIElement* getLastElement()
+    {
+        if (elements.empty()) return nullptr;
+        return elements.back().get(); // raw pointer to the last element
+    }
 private:
     float mx{0}, my{0};           // mouse position
     Renderer* renderer {nullptr}; // pointer to renderer

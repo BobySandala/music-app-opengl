@@ -1,10 +1,13 @@
 #pragma once
 #include "graphics/renderer.h"
 #include "event/events.h"
+#include <functional>
 
 class UIElement
 {
 public:
+    using Callback = std::function<void()>;
+
     UIElement(float x1, float y1, float x2, float y2,
               float r, float g, float b)
     {
@@ -42,8 +45,9 @@ public:
     virtual void onRightClick();
     virtual void onUnhover();
 
+    void setCallback(Callback cb) { callback=cb; }
+
 protected:
     Quad quad;
-
-    
+    Callback callback;
 };
